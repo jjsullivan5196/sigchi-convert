@@ -51,7 +51,7 @@ if __name__ == '__main__':
   import argparse
   import json
 
-  DEFAULT_TYPES=['Paper', 'Posters']
+  DEFAULT_TYPES=['Paper', 'Posters', 'Demos']
 
   parser = argparse.ArgumentParser(description='Convert SIGCHI program content to miniconf papers format')
   parser.add_argument('--types', dest='types', metavar='TS', type=str,

@@ -1,5 +1,14 @@
 #!/usr/bin/python
 
+COPY_FIELDS = ['title', 'abstract', 'keywords', 'doi']
+
+def ccase(s):
+  words = iter(s.split(' '))
+  return ''.join([next(words).lower(), *words])
+
+def scase(s):
+  return '_'.join([w.lower() for w in s.split(' ')])
+
 def session_table(prog):
   table = {}
 
@@ -22,24 +31,42 @@ def format_author(a):
   return f"{a['firstName']} {a['middleInitial'] + ' ' if a['middleInitial'] else ''}{a['lastName']}"
 
 def get_authors(paper, people):
-  return [format_author(people[a['personId']]) for a in paper['authors']]
+  return [
+    format_author(people[a['personId']])
+    for a in paper['authors']
+  ]
 
-def miniconf_paper(paper, sessions, people):
-  authors = get_authors(paper, people)
-
+def miniconf_paper(paper, track, sessions, people):
   result = {
     'UID': str(paper['id']),
-    'title': paper['title'],
+    'track': track,
     'sessions': sessions.get(paper['id']) or [],
-    'abstract': paper['abstract'],
-    'keywords': paper['keywords'],
-    'authors': authors
+    'authors': get_authors(paper, people),
+    **{
+      k: paper[k]
+      for k in iter(paper)
+      if k in COPY_FIELDS
+    }
   }
+
+  if 'qaLink' in paper:
+    result['qa'] = paper['qaLink']['url']
+
+  if 'broadcastLink' in paper:
+    result['broadcast'] = paper['broadcastLink']['url']
+
+  if 'videos' in paper:
+    for link in paper['videos']:
+      result[scase(link['type'])] = link['url']
 
   return result
 
 def convert_content(content, sessions, people, type_ids):
-  return [miniconf_paper(c, sessions, people) for c in content if c['typeId'] in type_ids]
+  return [
+    miniconf_paper(c, type_ids[c['typeId']], sessions, people)
+    for c in content
+    if c['typeId'] in type_ids
+  ]
 
 def get_typeid(prog, tname):
   for info in prog['contentTypes']:
@@ -72,7 +99,7 @@ if __name__ == '__main__':
   content = prog['contents']
   sessions = session_table(prog)
   people = people_table(prog)
-  type_ids = frozenset([get_typeid(prog, t) for t in args.types])
+  type_ids = {get_typeid(prog, t): t for t in args.types}
   converted = convert_content(content, sessions, people, type_ids)
 
   with (open(outname, 'w') if outname else sys.stdout) as fp:

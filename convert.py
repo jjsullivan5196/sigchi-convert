@@ -27,10 +27,17 @@ def format_author(a):
   return f"{a['firstName']} {a['middleInitial'] + ' ' if a['middleInitial'] else ''}{a['lastName']}"
 
 def get_authors(paper, people):
-  return [
-    format_author(people[a['personId']])
-    for a in paper['authors']
-  ]
+  authors = []
+  affiliation = set()
+
+  for a in paper['authors']:
+    authors.append(format_author(people[a['personId']]))
+    affiliation.update(set([af['institution'] for af in a['affiliations']]))
+
+  return {
+    'affiliations': list(affiliation),
+    'authors': authors
+  }
 
 def miniconf_paper(paper, sequence, track, sessions, people):
   result = {
@@ -38,7 +45,7 @@ def miniconf_paper(paper, sequence, track, sessions, people):
     'sequence': str(sequence),
     'track': track,
     'sessions': sessions.get(paper['id']) or [],
-    'authors': get_authors(paper, people),
+    **get_authors(paper, people),
     **{
       k: paper[k]
       for k in iter(paper)

@@ -32,9 +32,10 @@ def get_authors(paper, people):
     for a in paper['authors']
   ]
 
-def miniconf_paper(paper, track, sessions, people):
+def miniconf_paper(paper, sequence, track, sessions, people):
   result = {
     'UID': str(paper['id']),
+    'sequence': str(sequence),
     'track': track,
     'sessions': sessions.get(paper['id']) or [],
     'authors': get_authors(paper, people),
@@ -59,8 +60,8 @@ def miniconf_paper(paper, track, sessions, people):
 
 def convert_content(content, sessions, people, type_ids):
   return [
-    miniconf_paper(c, type_ids[c['typeId']], sessions, people)
-    for c in content
+    miniconf_paper(c, i, type_ids[c['typeId']], sessions, people)
+    for i, c in enumerate(content, start = 1)
     if c['typeId'] in type_ids
   ]
 

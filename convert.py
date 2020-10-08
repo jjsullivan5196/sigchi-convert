@@ -2,10 +2,6 @@
 
 COPY_FIELDS = ['title', 'abstract', 'keywords', 'doi']
 
-def ccase(s):
-  words = iter(s.split(' '))
-  return ''.join([next(words).lower(), *words])
-
 def scase(s):
   return '_'.join([w.lower() for w in s.split(' ')])
 

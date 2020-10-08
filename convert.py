@@ -1,6 +1,8 @@
 #!/usr/bin/python
+import re
 
 COPY_FIELDS = ['title', 'abstract', 'keywords', 'doi']
+AFFL_PUNCT = r'[.,:;-|]'
 
 def scase(s):
   return '_'.join([w.lower() for w in s.split(' ')])
@@ -28,14 +30,17 @@ def format_author(a):
 
 def get_authors(paper, people):
   authors = []
-  affiliation = set()
+  affiliation = {}
 
   for a in paper['authors']:
     authors.append(format_author(people[a['personId']]))
-    affiliation.update(set([af['institution'] for af in a['affiliations']]))
+    affiliation.update({
+      re.sub(AFFL_PUNCT, '', af['institution'].strip().casefold()): af['institution'].strip()
+      for af in a['affiliations']
+    })
 
   return {
-    'affiliations': list(affiliation),
+    'affiliations': list(affiliation.values()),
     'authors': authors
   }
 

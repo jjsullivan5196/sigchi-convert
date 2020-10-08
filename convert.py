@@ -26,7 +26,7 @@ def people_table(prog):
   return table
 
 def format_author(a):
-  return f"{a['firstName']} {a['middleInitial'] + ' ' if a['middleInitial'] else ''}{a['lastName']}"
+  return f"{a['firstName']} {a['middleInitial'] + ' ' if a.get('middleInitial', False) else ''}{a['lastName']}"
 
 def get_authors(paper, people):
   authors = []

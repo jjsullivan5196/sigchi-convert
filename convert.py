@@ -44,7 +44,7 @@ def get_authors(paper, people):
     'authors': authors
   }
 
-def miniconf_paper(paper, sequence, track, sessions, people):
+def miniconf_paper(paper, sequence, track, inc_live, sessions, people):
   result = {
     'UID': str(paper['id']),
     'sequence': str(sequence),
@@ -58,11 +58,12 @@ def miniconf_paper(paper, sequence, track, sessions, people):
     }
   }
 
-  if 'qaLink' in paper:
-    result['qa'] = paper['qaLink']['url']
+  if inc_live:
+    if 'qaLink' in paper:
+      result['qa'] = paper['qaLink']['url']
 
-  if 'broadcastLink' in paper:
-    result['broadcast'] = paper['broadcastLink']['url']
+    if 'broadcastLink' in paper:
+      result['broadcast'] = paper['broadcastLink']['url']
 
   if 'videos' in paper:
     for link in paper['videos']:
@@ -70,9 +71,9 @@ def miniconf_paper(paper, sequence, track, sessions, people):
 
   return result
 
-def convert_content(content, sessions, people, type_ids):
+def convert_content(content, sessions, people, type_ids, inc_live):
   return [
-    miniconf_paper(c, i, type_ids[c['typeId']], sessions, people)
+    miniconf_paper(c, i, type_ids[c['typeId']], inc_live, sessions, people)
     for i, c in enumerate(content, start = 1)
     if c['typeId'] in type_ids
   ]
@@ -90,6 +91,8 @@ if __name__ == '__main__':
   DEFAULT_TYPES=['Paper', 'Poster', 'Demo', 'SIC', 'DC']
 
   parser = argparse.ArgumentParser(description='Convert SIGCHI program content to miniconf papers format')
+  parser.add_argument('--hide-live', dest='hide_live', action='store_true', default=False,
+                      help=f"Don't include live participation links in output")
   parser.add_argument('--types', dest='types', metavar='TS', type=str,
                       nargs='+', default=DEFAULT_TYPES,
                       help=f'types of content to be converted (one or more of {json.dumps(DEFAULT_TYPES)})')
@@ -109,7 +112,7 @@ if __name__ == '__main__':
   sessions = session_table(prog)
   people = people_table(prog)
   type_ids = {get_typeid(prog, t): t for t in args.types}
-  converted = convert_content(content, sessions, people, type_ids)
+  converted = convert_content(content, sessions, people, type_ids, not args.hide_live)
 
   with (open(outname, 'w') if outname else sys.stdout) as fp:
     json.dump(converted, fp)
